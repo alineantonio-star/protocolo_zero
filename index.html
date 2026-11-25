@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROTOCOLO ZERO // Escape Room Digital</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --neon-cyan: #00f7ff;
+    --neon-pink: #ff00aa;
+    --neon-green: #39ff14;
+    --neon-yellow: #ffe600;
+    --bg-dark: #0a0e17;
+    --border: #1e3a5f;
+  }
+
+  body {
+    background: var(--bg-dark);
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0, 247, 255, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(255, 0, 170, 0.05) 0%, transparent 40%),
+      linear-gradient(rgba(0, 247, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 247, 255, 0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+  }
+
+  #game-container {
+    width: 100%;
+    max-width: 960px;
+    margin: 20px auto;
+    padding: 10px;
+  }
+
+  .screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeIn 0.4s ease;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #title-screen { text-align: center; padding: 40px 20px; }
+
+  .logo {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(1.3rem, 5vw, 2.3rem);
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px var(--neon-cyan), 0 0 25px rgba(0,247,255,0.5);
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    font-size: 1.05rem;
+    color: var(--neon-pink);
+    text-shadow: 0 0 8px var(--neon-pink);
+    margin-bottom: 28px;
+    letter-spacing: 3px;
+  }
+
+  .sys-info {
+    font-size: 0.85rem;
+    color: #7dd3fc;
+    margin-bottom: 22px;
+    border: 1px solid var(--border);
+    padding: 12px 20px;
+    background: rgba(0,20,40,0.6);
+  }
+
+  .stats-preview {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 20px 0 30px;
+    font-size: 0.9rem;
+  }
+
+  .stat-box {
+    border: 1px solid var(--neon-cyan);
+    padding: 10px 16px;
+    background: rgba(0,40,60,0.4);
+    box-shadow: 0 0 12px rgba(0,247,255,0.2);
+  }
+
+  .btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1rem;
+    padding: 14px 28px;
+    margin: 8px;
+    border: 2px solid var(--neon-cyan);
+    background: transparent;
+    color: var(--neon-cyan);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .btn:hover {
+    background: rgba(0,247,255,0.15);
+    box-shadow: 0 0 18px rgba(0,247,255,0.45);
+    transform: scale(1.03);
+  }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-pink { border-color: var(--neon-pink); color: var(--neon-pink); }
+  .btn-pink:hover {
+    background: rgba(255,0,170,0.15);
+    box-shadow: 0 0 18px rgba(255,0,170,0.45);
+  }
+  .btn-green { border-color: var(--neon-green); color: var(--neon-green); }
+  .btn-green:hover {
+    background: rgba(57,255,20,0.15);
+    box-shadow: 0 0 18px rgba(57,255,20,0.4);
+  }
+  .btn-sm { padding: 10px 16px; font-size: 0.9rem; }
+
+  #name-screen { text-align: center; padding: 40px 20px; }
+  #name-screen h2 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.95rem;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 10px var(--neon-yellow);
+    margin-bottom: 20px;
+  }
+  #playerNameInput {
+    width: 100%;
+    max-width: 280px;
+    padding: 14px 16px;
+    margin: 12px 0 20px;
+    background: #0a1525;
+    border: 2px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    text-align: center;
+    outline: none;
+  }
+  #playerNameInput:focus { box-shadow: 0 0 14px rgba(0,247,255,0.4); }
+
+  #howto-screen, #ranking-screen {
+    max-width: 620px;
+    padding: 30px 20px;
+    text-align: left;
+  }
+  #howto-screen h2, #ranking-screen h2 {
+    text-align: center;
+    margin-bottom: 18px;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 10px var(--neon-yellow);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.9rem;
+  }
+  #howto-screen ul {
+    list-style: none;
+    line-height: 1.85;
+    margin-bottom: 22px;
+  }
+  #howto-screen li::before { content: "> "; color: var(--neon-green); }
+
+  .rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 22px;
+    font-size: 0.9rem;
+  }
+  .rank-table th, .rank-table td {
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .rank-table th {
+    background: rgba(0,40,60,0.6);
+    color: var(--neon-cyan);
+  }
+  .rank-table tr:nth-child(even) { background: rgba(0,20,40,0.4); }
+  .rank-table .me { color: var(--neon-green); font-weight: bold; }
+  .rank-empty { text-align: center; color: #7dd3fc; margin: 20px 0; }
+
+  #intro-screen { width: 100%; }
+  #walkCanvas {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 22px rgba(0,247,255,0.3);
+    background: #1a1a2e;
+    image-rendering: pixelated;
+    display: block;
+    margin: 0 auto;
+  }
+  .intro-text {
+    margin-top: 12px;
+    font-size: 0.95rem;
+    color: var(--neon-yellow);
+    text-align: center;
+  }
+  .controls-hint {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #7dd3fc;
+    text-align: center;
+  }
+
+  #game-screen { width: 100%; }
+
+  .hud {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+    font-size: 0.85rem;
+  }
+  .hud-item {
+    border: 1px solid var(--border);
+    padding: 10px;
+    background: rgba(10,20,35,0.85);
+    text-align: center;
+  }
+  .hud-item span {
+    display: block;
+    font-size: 1.1rem;
+    margin-top: 4px;
+    color: var(--neon-green);
+    text-shadow: 0 0 6px var(--neon-green);
+  }
+  .hud-item.danger span {
+    color: var(--neon-pink);
+    text-shadow: 0 0 6px var(--neon-pink);
+  }
+
+  .main-panel {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 700px) {
+    .main-panel { grid-template-columns: 1fr; }
+    .hud { grid-template-columns: 1fr 1fr; }
+  }
+
+  .left-panel, .right-panel {
+    border: 1px solid var(--neon-cyan);
+    background: rgba(8,15,28,0.9);
+    padding: 16px;
+    box-shadow: 0 0 14px rgba(0,247,255,0.15);
+  }
+
+  .room-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.7rem;
+    color: var(--neon-pink);
+    margin-bottom: 12px;
+    text-shadow: 0 0 8px var(--neon-pink);
+  }
+
+  .challenge-text {
+    line-height: 1.6;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    color: #c0e8ff;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  #answerInput {
+    flex: 1;
+    min-width: 140px;
+    padding: 12px 14px;
+    background: #0a1525;
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1rem;
+    outline: none;
+  }
+  #answerInput:focus { box-shadow: 0 0 12px rgba(0,247,255,0.4); }
+
+  .log-box {
+    height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    padding: 10px;
+    background: #050a12;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  .log-box p { margin-bottom: 4px; }
+  .log-ok { color: var(--neon-green); }
+  .log-err { color: var(--neon-pink); }
+  .log-sys { color: #7dd3fc; }
+  .log-hint { color: var(--neon-yellow); }
+
+  #end-screen { text-align: center; padding: 45px 20px; }
+  .end-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(1.1rem, 4vw, 1.9rem);
+    margin-bottom: 18px;
+  }
+  .win { color: var(--neon-green); text-shadow: 0 0 14px var(--neon-green); }
+  .lose { color: var(--neon-pink); text-shadow: 0 0 14px var(--neon-pink); }
+  .final-score { font-size: 1.25rem; margin: 16px 0; }
+  .record { color: var(--neon-yellow); margin-bottom: 20px; }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+
+  <div id="title-screen" class="screen active">
+    <div class="logo">PROTOCOLO ZERO</div>
+    <div class="subtitle">O SISTEMA TE PRENDEU</div>
+    <div class="sys-info">
+      SISTEMA ONLINE // VERSÃO 2.2<br>
+      Laboratório 07 — Setor de Contenção Digital
+    </div>
+    <div class="stats-preview">
+      <div class="stat-box">05 DESAFIOS</div>
+      <div class="stat-box">05:00 MINUTOS</div>
+      <div class="stat-box">100 PONTOS</div>
+    </div>
+    <button class="btn btn-green" id="btnStart">COMEÇAR MISSÃO</button>
+    <button class="btn btn-pink" id="btnHowto">COMO JOGAR</button>
+    <button class="btn" id="btnRanking">RANKING</button>
+  </div>
+
+  <div id="name-screen" class="screen">
+    <h2>IDENTIFICAÇÃO DO AGENTE</h2>
+    <p style="color:#7dd3fc;margin-bottom:8px;">Digite seu nome de código:</p>
+    <input type="text" id="playerNameInput" maxlength="16" placeholder="Ex: NEON_FOX" autocomplete="off" spellcheck="false">
+    <br>
+    <button class="btn btn-green" id="btnConfirmName">CONFIRMAR</button>
+    <button class="btn" id="btnBackFromName">VOLTAR</button>
+  </div>
+
+  <div id="howto-screen" class="screen">
+    <h2>// COMO JOGAR</h2>
+    <ul>
+      <li>Digite seu nome de agente e entre no Laboratório 07.</li>
+      <li>Use as setas ou WASD para mover o personagem até a porta.</li>
+      <li>Resolva 5 enigmas progressivos antes do tempo acabar.</li>
+      <li>Digite a resposta e clique em VALIDAR (ou pressione Enter).</li>
+      <li>Dicas custam 10 pontos cada.</li>
+      <li>Acertos aumentam a pontuação e liberam a próxima porta.</li>
+      <li>Seu recorde entra no ranking local de agentes.</li>
+      <li>Objetivo: zerar o Protocolo Zero e escapar.</li>
+    </ul>
+    <button class="btn" id="btnBackHowto">VOLTAR</button>
+  </div>
+
+  <div id="ranking-screen" class="screen">
+    <h2>// RANKING DE AGENTES</h2>
+    <div id="rankingContent"></div>
+    <button class="btn" id="btnBackRanking">VOLTAR</button>
+    <button class="btn btn-pink" id="btnClearRanking">LIMPAR RANKING</button>
+  </div>
+
+  <div id="intro-screen" class="screen">
+    <canvas id="walkCanvas" width="800" height="320"></canvas>
+    <p class="intro-text" id="introMsg">Agente, mova-se até a porta do LAB 07</p>
+    <p class="controls-hint">← → ou A D para andar · Chegue na porta neon para entrar</p>
+  </div>
+
+  <div id="game-screen" class="screen">
+    <div class="hud">
+      <div class="hud-item" id="timerBox">TEMPO<span id="timerDisplay">05:00</span></div>
+      <div class="hud-item">PONTOS<span id="scoreDisplay">100</span></div>
+      <div class="hud-item">PORTA<span id="statusDisplay">BLOQUEADO</span></div>
+      <div class="hud-item">SALA<span id="roomDisplay">01/05</span></div>
+    </div>
+    <div class="main-panel">
+      <div class="left-panel">
+        <div class="room-title" id="roomTitle">SALA 01</div>
+        <div class="challenge-text" id="challengeText"></div>
+        <div class="input-group">
+          <input type="text" id="answerInput" placeholder="SUA RESPOSTA" autocomplete="off" spellcheck="false">
+          <button class="btn btn-sm btn-green" id="btnValidate">VALIDAR</button>
+        </div>
+        <button class="btn btn-sm btn-pink" id="btnHint">USAR DICA (-10 PTS)</button>
+      </div>
+      <div class="right-panel">
+        <div style="margin-bottom:8px;color:var(--neon-cyan);">LOG DE ATIVIDADES</div>
+        <div class="log-box" id="activityLog"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="end-screen" class="screen">
+    <div class="end-title" id="endTitle"></div>
+    <div class="final-score" id="finalScore"></div>
+    <div class="record" id="recordDisplay"></div>
+    <button class="btn btn-green" id="btnRestart">REINICIAR MISSÃO</button>
+    <button class="btn" id="btnShowRankEnd">VER RANKING</button>
+    <button class="btn" id="btnMenu">MENU PRINCIPAL</button>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   PROTOCOLO ZERO v2.1 — Escape Room Digital
+   Neon + Minecraft | Nome | Movimento | Ranking
+   ============================================================ */
+
+var Game = {
+  score: 100,
+  timeLeft: 300,
+  currentRoom: 0,
+  hintsUsed: 0,
+  timerId: null,
+  isPlaying: false,
+  playerName: 'AGENTE'
+};
+
+var scoreRef = Game;
+var RANK_KEY = 'pz_ranking_v2';
+var keys = { left: false, right: false };
+var walkAnimId = null;
+var walkState = null;
+
+var AudioCtx = window.AudioContext || window.webkitAudioContext;
+var audioCtx = null;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function beep(freq, dur, type, vol) {
+  type = type || 'square';
+  vol = (vol !== undefined) ? vol : 0.08;
+  ensureAudio();
+  var osc = audioCtx.createOscillator();
+  var gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + dur);
+}
+
+function sfxOk() {
+  beep(660, 0.12);
+  setTimeout(function () { beep(880, 0.15); }, 100);
+}
+function sfxErr() { beep(180, 0.25, 'sawtooth', 0.1); }
+function sfxHint() { beep(440, 0.1); beep(520, 0.1); }
+function sfxTick() { beep(900, 0.04, 'sine', 0.03); }
+function sfxWin() {
+  var notes = [523, 659, 784, 1046];
+  for (var i = 0; i < notes.length; i++) {
+    (function (f, d) {
+      setTimeout(function () { beep(f, 0.2, 'square', 0.1); }, d);
+    })(notes[i], i * 150);
+  }
+}
+function sfxLose() {
+  var notes = [400, 300, 200, 100];
+  for (var i = 0; i < notes.length; i++) {
+    (function (f, d) {
+      setTimeout(function () { beep(f, 0.3, 'sawtooth', 0.1); }, d);
+    })(notes[i], i * 200);
+  }
+}
+
+var challenges = [
+  {
+    title: 'SALA 01 — ACESSO BINÁRIO',
+    text: 'O terminal exibe o código de acesso em binário:\n\n  01010000 01011010\n\nConverta para ASCII e digite a senha (2 letras maiúsculas).\n\nDica do sistema: P = 80, Z = 90.',
+    answer: 'PZ',
+    hint: '01010000 = P e 01011010 = Z → resposta PZ',
+    points: 20
+  },
+  {
+    title: 'SALA 02 — PONTEIRO FANTASMA',
+    text: 'Analise o trecho em C:\n\n  int x = 7;\n  int *p = &x;\n  *p = *p + 5;\n  if (*p > 10) {\n    printf("%d", *p * 2);\n  } else {\n    printf("%d", *p);\n  }\n\nQual valor é impresso?',
+    answer: '24',
+    hint: 'x começa 7, *p = 12, 12 > 10 então imprime 12*2 = 24',
+    points: 25
+  },
+  {
+    title: 'SALA 03 — LAÇO FINAL',
+    text: 'Complete o resultado do laço:\n\n  int s = 0;\n  for (int i = 1; i <= 5; i++) {\n    if (i % 2 == 0) {\n      s += i * 3;\n    } else if (i == 3) {\n      s += 10;\n    } else {\n      s += i;\n    }\n  }\n\nValor final de s?',
+    answer: '29',
+    hint: 'i=1→1; i=2→6; i=3→10; i=4→12; i=5→5 → total 1+6+10+12+5 = 29',
+    points: 30
+  },
+  {
+    title: 'SALA 04 — VETOR SOMBRA',
+    text: 'Analise o vetor e o laço:\n\n  int v[5] = {2, 4, 6, 8, 10};\n  int *p = v;\n  int r = 0;\n  for (int i = 0; i < 5; i++) {\n    if (i % 2 == 0) {\n      r += *(p + i);\n    } else {\n      r += *(p + i) / 2;\n    }\n  }\n\nQual o valor final de r?',
+    answer: '24',
+    hint: 'i=0→2; i=1→2; i=2→6; i=3→4; i=4→10 → total 2+2+6+4+10 = 24',
+    points: 35
+  },
+  {
+    title: 'SALA 05 — PROTOCOLO ZERO',
+    text: 'Última porta. Resolva o laço aninhado:\n\n  int k = 0;\n  for (int i = 1; i <= 3; i++) {\n    for (int j = 1; j <= i; j++) {\n      if (i == j) {\n        k += i * j;\n      } else if (j == 1) {\n        k += 2;\n      } else {\n        k += 1;\n      }\n    }\n  }\n\nValor final de k?',
+    answer: '19',
+    hint: 'i=1: +1 →1; i=2: +2 +4 →7; i=3: +2 +1 +9 →19',
+    points: 40
+  }
+];
+
+function loadRanking() {
+  try {
+    var raw = localStorage.getItem(RANK_KEY);
+    if (!raw) return [];
+    var arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr;
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveRanking(list) {
+  localStorage.setItem(RANK_KEY, JSON.stringify(list));
+}
+
+function addToRanking(name, score) {
+  var list = loadRanking();
+  list.push({
+    name: name || 'AGENTE',
+    score: score,
+    date: new Date().toLocaleDateString('pt-BR')
+  });
+  list.sort(function (a, b) { return b.score - a.score; });
+  if (list.length > 15) list = list.slice(0, 15);
+  saveRanking(list);
+  return list;
+}
+
+function renderRanking(highlightName, highlightScore) {
+  var list = loadRanking();
+  var box = document.getElementById('rankingContent');
+  if (list.length === 0) {
+    box.innerHTML = '<p class="rank-empty">Nenhum agente registrado ainda.</p>';
+    return;
+  }
+  var html = '<table class="rank-table"><thead><tr><th>#</th><th>AGENTE</th><th>PONTOS</th><th>DATA</th></tr></thead><tbody>';
+  for (var i = 0; i < list.length; i++) {
+    var r = list[i];
+    var isMe = highlightName && r.name === highlightName && r.score === highlightScore;
+    html += '<tr class="' + (isMe ? 'me' : '') + '">';
+    html += '<td>' + (i + 1) + '</td>';
+    html += '<td>' + escapeHtml(r.name) + '</td>';
+    html += '<td>' + r.score + '</td>';
+    html += '<td>' + escapeHtml(r.date) + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  box.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function showScreen(id) {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) {
+    screens[i].classList.remove('active');
+  }
+  document.getElementById(id).classList.add('active');
+}
+
+function log(msg, cls) {
+  cls = cls || 'log-sys';
+  var box = document.getElementById('activityLog');
+  var p = document.createElement('p');
+  p.className = cls;
+  p.textContent = '> ' + msg;
+  box.appendChild(p);
+  box.scrollTop = box.scrollHeight;
+}
+
+function updateHUD() {
+  var m = Math.floor(Game.timeLeft / 60);
+  var s = Game.timeLeft % 60;
+  var timerEl = document.getElementById('timerDisplay');
+  timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  document.getElementById('scoreDisplay').textContent = scoreRef.score;
+  document.getElementById('roomDisplay').textContent = (Game.currentRoom + 1) + '/05';
+
+  var timerBox = document.getElementById('timerBox');
+  if (Game.timeLeft <= 60) {
+    timerBox.classList.add('danger');
+  } else {
+    timerBox.classList.remove('danger');
+  }
+}
+
+function goToNameScreen() {
+  ensureAudio();
+  document.getElementById('playerNameInput').value = '';
+  showScreen('name-screen');
+  document.getElementById('playerNameInput').focus();
+}
+
+function confirmName() {
+  var raw = document.getElementById('playerNameInput').value.trim();
+  if (raw.length < 1) {
+    alert('Digite um nome de código para o agente.');
+    return;
+  }
+  if (raw.length > 16) raw = raw.substring(0, 16);
+  Game.playerName = raw.toUpperCase();
+  startWalkPhase();
+}
+
+function startWalkPhase() {
+  showScreen('intro-screen');
+  document.getElementById('introMsg').textContent =
+    Game.playerName + ', mova-se até a porta do LAB 07';
+  keys.left = false;
+  keys.right = false;
+  runWalkSequence();
+}
+
+function runWalkSequence() {
+  if (walkAnimId) {
+    cancelAnimationFrame(walkAnimId);
+    walkAnimId = null;
+  }
+
+  var canvas = document.getElementById('walkCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width;
+  var H = canvas.height;
+  var doorX = W - 160;
+  var groundY = H - 130;
+
+  walkState = {
+    px: 40,
+    frame: 0,
+    phase: 0,
+    speed: 3.2
+  };
+
+  function drawBlock(x, y, w, h, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.strokeRect(x, y, w, h);
+  }
+
+  function drawPlayer(x, y, walkFrame, moving) {
+    var legOffset = moving ? Math.sin(walkFrame * 0.35) * 5 : 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(x - 2, y + 36, 28, 6);
+    drawBlock(x + 2, y + 24 + legOffset, 8, 14, '#3d5a80');
+    drawBlock(x + 14, y + 24 - legOffset, 8, 14, '#3d5a80');
+    drawBlock(x, y + 8, 24, 20, '#00c2d4');
+    drawBlock(x + 2, y - 10, 20, 20, '#f0c8a0');
+    ctx.fillStyle = '#111';
+    ctx.fillRect(x + 6, y - 2, 4, 4);
+    ctx.fillRect(x + 14, y - 2, 4, 4);
+    drawBlock(x + 2, y - 12, 20, 6, '#39ff14');
+    ctx.fillStyle = '#00f7ff';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(Game.playerName, x + 12, y - 18);
+    ctx.textAlign = 'left';
+  }
+
+  function drawScene() {
+    ctx.fillStyle = '#0d1b2a';
+    ctx.fillRect(0, 0, W, H);
+
+    for (var i = 0; i < W; i += 32) {
+      for (var j = H - 80; j < H; j += 32) {
+        var c = ((i / 32) + (j / 32)) % 2 === 0 ? '#1b4332' : '#2d6a4f';
+        drawBlock(i, j, 32, 32, c);
+      }
+    }
+    for (var k = 0; k < W; k += 40) {
+      drawBlock(k, H - 120, 40, 40, '#415a77');
+    }
+
+    drawBlock(doorX, H - 200, 80, 120, '#1b263b');
+    drawBlock(doorX + 10, H - 190, 60, 100, '#0d1b2a');
+    ctx.strokeStyle = '#00f7ff';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(doorX + 10, H - 190, 60, 100);
+    ctx.fillStyle = '#00f7ff';
+    ctx.font = '12px monospace';
+    ctx.fillText('LAB 07', doorX + 18, H - 205);
+
+    drawBlock(40, H - 180, 50, 60, '#778da9');
+    drawBlock(W - 100, H - 180, 40, 40, '#778da9');
+  }
+
+  function loop() {
+    if (!walkState) return;
+    var st = walkState;
+    var moving = false;
+
+    if (st.phase === 0) {
+      if (keys.left) {
+        st.px -= st.speed;
+        moving = true;
+      }
+      if (keys.right) {
+        st.px += st.speed;
+        moving = true;
+      }
+      if (st.px < 10) st.px = 10;
+      if (st.px > doorX + 30) st.px = doorX + 30;
+
+      if (st.px >= doorX + 8) {
+        st.phase = 1;
+        st.frame = 0;
+        document.getElementById('introMsg').textContent =
+          'Acesso autorizado. Entrando na contenção...';
+        beep(700, 0.15);
+      }
+    }
+
+    drawScene();
+    drawPlayer(st.px, groundY, st.frame, moving || st.phase === 1);
+    st.frame++;
+
+    if (st.phase === 1) {
+      var alpha = Math.min(1, st.frame / 40);
+      ctx.fillStyle = 'rgba(10,14,23,' + alpha + ')';
+      ctx.fillRect(0, 0, W, H);
+      if (st.frame > 50) {
+        walkState = null;
+        beginGame();
+        return;
+      }
+    }
+
+    walkAnimId = requestAnimationFrame(loop);
+  }
+
+  walkAnimId = requestAnimationFrame(loop);
+}
+
+function beginGame() {
+  Game.score = 100;
+  Game.timeLeft = 300;
+  Game.currentRoom = 0;
+  Game.hintsUsed = 0;
+  Game.isPlaying = true;
+  scoreRef.score = 100;
+
+  document.getElementById('activityLog').innerHTML = '';
+  document.getElementById('statusDisplay').textContent = 'BLOQUEADO';
+  document.getElementById('statusDisplay').style.color = 'var(--neon-pink)';
+
+  showScreen('game-screen');
+  loadRoom();
+  updateHUD();
+  log('Agente ' + Game.playerName + ' conectado. Protocolo Zero iniciado.', 'log-sys');
+  log('Você tem 5 minutos. Boa sorte.', 'log-sys');
+
+  if (Game.timerId) clearInterval(Game.timerId);
+  Game.timerId = setInterval(tick, 1000);
+}
+
+function loadRoom() {
+  var c = challenges[Game.currentRoom];
+  document.getElementById('roomTitle').textContent = c.title;
+  document.getElementById('challengeText').textContent = c.text;
+  document.getElementById('answerInput').value = '';
+  document.getElementById('answerInput').focus();
+  updateHUD();
+}
+
+function tick() {
+  if (!Game.isPlaying) return;
+  Game.timeLeft--;
+  updateHUD();
+  if (Game.timeLeft <= 30 && Game.timeLeft % 2 === 0) sfxTick();
+  if (Game.timeLeft <= 0) {
+    endGame(false);
+  }
+}
+
+function validateAnswer() {
+  if (!Game.isPlaying) return;
+  var input = document.getElementById('answerInput').value.trim().toUpperCase();
+  var c = challenges[Game.currentRoom];
+  var correct = c.answer.toUpperCase();
+
+  if (input.length === 0) {
+    log('Campo vazio. Digite uma resposta.', 'log-err');
+    sfxErr();
+    return;
+  }
+
+  if (input === correct) {
+    sfxOk();
+    scoreRef.score += c.points;
+    log('ACESSO CONCEDIDO — Sala ' + (Game.currentRoom + 1) + ' liberada (+' + c.points + ' pts)', 'log-ok');
+    Game.currentRoom++;
+
+    if (Game.currentRoom >= challenges.length) {
+      document.getElementById('statusDisplay').textContent = 'DESBLOQUEADO';
+      document.getElementById('statusDisplay').style.color = 'var(--neon-green)';
+      log('TODAS AS PORTAS ABERTAS. PROTOCOLO ZERO CONCLUÍDO.', 'log-ok');
+      endGame(true);
+    } else {
+      log('Avançando para Sala ' + (Game.currentRoom + 1) + '...', 'log-sys');
+      setTimeout(loadRoom, 600);
+    }
+  } else {
+    sfxErr();
+    log('Resposta incorreta: "' + input + '"', 'log-err');
+  }
+  updateHUD();
+}
+
+function useHint() {
+  if (!Game.isPlaying) return;
+  if (scoreRef.score < 10) {
+    log('Pontos insuficientes para dica.', 'log-err');
+    sfxErr();
+    return;
+  }
+  scoreRef.score -= 10;
+  Game.hintsUsed++;
+  var h = challenges[Game.currentRoom].hint;
+  log('DICA: ' + h, 'log-hint');
+  sfxHint();
+  updateHUD();
+}
+
+function endGame(won) {
+  Game.isPlaying = false;
+  if (Game.timerId) clearInterval(Game.timerId);
+
+  if (won) {
+    var bonus = Math.floor(Game.timeLeft / 2);
+    scoreRef.score += bonus;
+    log('Bônus de tempo: +' + bonus + ' pts', 'log-ok');
+  }
+
+  addToRanking(Game.playerName, scoreRef.score);
+
+  showScreen('end-screen');
+  var title = document.getElementById('endTitle');
+  var final = document.getElementById('finalScore');
+  var rec = document.getElementById('recordDisplay');
+
+  if (won) {
+    title.textContent = 'MISSÃO CUMPRIDA';
+    title.className = 'end-title win';
+    sfxWin();
+    final.textContent = Game.playerName + ' — Pontuação: ' + scoreRef.score;
+    rec.textContent = 'Resultado salvo no ranking de agentes.';
+  } else {
+    title.textContent = 'SISTEMA TRAVADO // GAME OVER';
+    title.className = 'end-title lose';
+    sfxLose();
+    final.textContent = Game.playerName + ' — Pontuação: ' + scoreRef.score;
+    rec.textContent = 'Resultado salvo no ranking de agentes.';
+  }
+}
+
+document.getElementById('btnStart').addEventListener('click', goToNameScreen);
+document.getElementById('btnHowto').addEventListener('click', function () {
+  showScreen('howto-screen');
+});
+document.getElementById('btnRanking').addEventListener('click', function () {
+  renderRanking();
+  showScreen('ranking-screen');
+});
+document.getElementById('btnConfirmName').addEventListener('click', confirmName);
+document.getElementById('btnBackFromName').addEventListener('click', function () {
+  showScreen('title-screen');
+});
+document.getElementById('btnBackHowto').addEventListener('click', function () {
+  showScreen('title-screen');
+});
+document.getElementById('btnBackRanking').addEventListener('click', function () {
+  showScreen('title-screen');
+});
+document.getElementById('btnClearRanking').addEventListener('click', function () {
+  if (confirm('Limpar todo o ranking local?')) {
+    localStorage.removeItem(RANK_KEY);
+    renderRanking();
+  }
+});
+document.getElementById('btnValidate').addEventListener('click', validateAnswer);
+document.getElementById('btnHint').addEventListener('click', useHint);
+document.getElementById('btnRestart').addEventListener('click', goToNameScreen);
+document.getElementById('btnShowRankEnd').addEventListener('click', function () {
+  renderRanking(Game.playerName, scoreRef.score);
+  showScreen('ranking-screen');
+});
+document.getElementById('btnMenu').addEventListener('click', function () {
+  showScreen('title-screen');
+});
+
+document.getElementById('playerNameInput').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') confirmName();
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' && document.getElementById('game-screen').classList.contains('active')) {
+    validateAnswer();
+  }
+  if (document.getElementById('intro-screen').classList.contains('active')) {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+  }
+});
+
+document.addEventListener('keyup', function (e) {
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+});
+
+console.log('%c PROTOCOLO ZERO // SISTEMA ONLINE v2.1', 'color:#00f7ff;font-weight:bold');
+</script>
+</body>
+</html>
